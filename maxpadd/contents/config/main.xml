@@ -4,11 +4,12 @@
       xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
                           http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
     <kcfgfile name=""/>
-    <group name="General">
-        <entry name="gapPercent" type="Int">
-            <default>90</default>
-            <min>50</min>
-            <max>100</max>
+    <group name="">
+        <entry name="gapSize" type="Int">
+            <default>15</default>
+        </entry>
+        <entry name="ignoredApps" type="String">
+            <default></default>
         </entry>
     </group>
 </kcfg>

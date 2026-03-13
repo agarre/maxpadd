@@ -3,56 +3,101 @@
  * (C) 2026 Hugo Breda Schneweiss <hbreda@gmail.com>
  * License: GPL-3.0
  *
- * Adds configurable percentage-based padding around maximized windows.
- * AIDEV-NOTE: Uses idempotency check (geometry comparison) to prevent infinite loops
+ * Adds configurable padding (in pixels) around maximized windows.
  */
 
-const gapPercent = Math.max(50, Math.min(100, readConfig("gapPercent", 90)));
+var defaultIgnored = ["plasmashell", "krunner", "spectacle", "org.kde.spectacle",
+    "polkit-kde-authentication-agent-1", "kscreen_osd_service",
+    "ksplashqml", "ksmserver", "xdg-desktop-portal-kde"];
+var winState = {}; // { internalId: { gapped: bool, geo: {x,y,width,height} } }
+var busy = {};
 
-// --- Core ---
-
-// AIDEV-NOTE: KWin 6 has no window.maximized property — use maximizedAboutToChange(mode)
-// MaximizeMode: 0 = restore, 3 = fully maximized (horizontal + vertical)
-function applyGap(win) {
-    if (!win || !win.normalWindow) return;
-    if (win.fullScreen) return;
-    if (gapPercent >= 100) return;
-
-    const area = workspace.clientArea(KWin.MaximizeArea, win);
-    const factor = gapPercent / 100.0;
-    const newW = Math.round(area.width * factor);
-    const newH = Math.round(area.height * factor);
-    const newX = Math.round(area.x + (area.width - newW) / 2);
-    const newY = Math.round(area.y + (area.height - newH) / 2);
-
-    // Idempotency guard: skip if already at target geometry
-    const g = win.frameGeometry;
-    if (g.x === newX && g.y === newY && g.width === newW && g.height === newH) return;
-
-    win.frameGeometry = Qt.rect(newX, newY, newW, newH);
+function getGapSize() {
+    return Math.max(0, readConfig("gapSize", 15));
 }
 
-// --- Signal connections per window ---
+function getIgnoredApps() {
+    var userIgnored = readConfig("ignoredApps", "").toString().split(",")
+        .map(function (s) { return s.trim().toLowerCase(); })
+        .filter(function (s) { return s.length > 0; });
+    return defaultIgnored.concat(userIgnored);
+}
+
+function isIgnored(win) {
+    var ignored = getIgnoredApps();
+    var cls = String(win.resourceClass).toLowerCase();
+    var name = String(win.resourceName).toLowerCase();
+    return ignored.indexOf(cls) >= 0 || ignored.indexOf(name) >= 0;
+}
+
+function applyGap(win) {
+    if (!win || !win.normalWindow || win.fullScreen) return;
+    if (win.move || win.resize) return;
+    if (isIgnored(win)) return;
+    var wid = String(win.internalId);
+    if (busy[wid]) return;
+
+    var gap = getGapSize();
+    if (gap <= 0) return;
+
+    var area = workspace.clientArea(KWin.MaximizeArea, win);
+    var g = win.frameGeometry;
+    if (g.width !== area.width || g.height !== area.height) return;
+
+    busy[wid] = true;
+    var st = winState[wid];
+
+    // AIDEV-NOTE toggle: 2nd maximize from gapped state restores original size
+    if (st && st.gapped) {
+        win.setMaximize(false, false);
+        if (st.geo) {
+            win.frameGeometry = st.geo;
+        }
+        winState[wid] = {gapped: false, geo: st.geo};
+        busy[wid] = false;
+        return;
+    }
+
+    win.setMaximize(false, false);
+    win.frameGeometry = {
+        x: area.x + gap, y: area.y + gap,
+        width: area.width - (gap * 2), height: area.height - (gap * 2)
+    };
+    winState[wid] = {gapped: true, geo: st ? st.geo : null};
+    busy[wid] = false;
+}
+
+function saveGeo(win) {
+    var wid = String(win.internalId);
+    if (busy[wid]) return;
+    var st = winState[wid];
+    if (st && st.gapped) return;
+    var area = workspace.clientArea(KWin.MaximizeArea, win);
+    var g = win.frameGeometry;
+    if (g.width === area.width && g.height === area.height) return;
+    // AIDEV-NOTE skip stale gapped geometry from previous script instance
+    var mL = g.x - area.x;
+    var mR = (area.x + area.width) - (g.x + g.width);
+    var mT = g.y - area.y;
+    var mB = (area.y + area.height) - (g.y + g.height);
+    if (mL > 0 && mL === mR && mL === mT && mL === mB) return;
+    winState[wid] = {gapped: false, geo: {x: g.x, y: g.y, width: g.width, height: g.height}};
+}
 
 function connectWindow(win) {
-    win.maximizedAboutToChange.connect(function (mode) {
-        // AIDEV-NOTE: mode 3 = fully maximized; apply gap after KWin finishes via callLater
-        if (mode === 3) {
-            Qt.callLater(function () { applyGap(win); });
-        }
-    });
+    saveGeo(win);
+    applyGap(win);
+    win.frameGeometryChanged.connect(function () { saveGeo(win); applyGap(win); });
+    win.fullScreenChanged.connect(function () { applyGap(win); });
 }
-
-// --- Init: connect existing + new windows ---
 
 workspace.windowList().forEach(connectWindow);
 workspace.windowAdded.connect(connectWindow);
-
-// --- React to layout changes ---
 
 function applyAll() {
     workspace.windowList().forEach(function (win) { applyGap(win); });
 }
 
 workspace.screensChanged.connect(applyAll);
+workspace.virtualScreenSizeChanged.connect(applyAll);
 workspace.virtualScreenGeometryChanged.connect(applyAll);
