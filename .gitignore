@@ -1,0 +1,4 @@
+# Ignore all markdown files outside /docs and root
+*.md
+!/docs/*.md
+!/CLAUDE.md
