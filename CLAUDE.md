@@ -24,9 +24,7 @@ maxpadd/
 │   │       └── config.ui      ← Qt Designer config UI
 │   ├── metadata.json           ← KWin package metadata
 │   └── LICENSE
-├── docs/                       ← All .md documentation lives here
-│   ├── kwin-maximized-gap-guide.md
-│   └── kwin-maximized-gap-prompt.md
+├── reload.sh                   ← Dev helper: toggle script off/on
 ├── .gitignore
 └── CLAUDE.md
 ```
@@ -36,7 +34,7 @@ maxpadd/
 ### Code Standards
 
 - Plain JavaScript ONLY — no TypeScript, no build step, no dependencies
-- Keep main.js under 80 lines
+- Keep main.js under 120 lines
 - Use KWin 6 API exclusively — NEVER use deprecated Plasma 5 API names:
   - `windowList` not `clientList()`
   - `windowAdded` not `clientAdded`
@@ -59,9 +57,8 @@ maxpadd/
 
 ### File Organization
 
-- **All `.md` files go in `/docs`** — .gitignore blocks .md files outside /docs
-- CLAUDE.md is the exception (root level, tracked by git)
-- Documentation language: PT-BR for guides, EN for code comments and README
+- .gitignore blocks .md files except CLAUDE.md and README.md at root
+- Documentation language: EN for code comments and README
 
 ### Development Workflow
 
@@ -81,15 +78,15 @@ journalctl -f QT_CATEGORY=js QT_CATEGORY=kwin_scripting
 
 - Maximize window → gap appears, window centered
 - Restore window → returns to previous size
-- Change % in config → gap updates after reconfigure
+- Change gap size in config → gap updates after reconfigure
 - Both monitors work independently
 - Fullscreen (F11) NOT affected
 - System Settings / dialogs NOT affected
 - Window with minimum size constraint → no crash
-- Set to 100% → window maximizes normally (no gap)
+- Set to 0 px → window maximizes normally (no gap)
 
 ## Git Conventions
 
 - Commit messages: EN, imperative mood, concise
-- Branch naming: `feature/`, `fix/`, `docs/`
+- Branch naming: `feature/`, `fix/`
 - Never commit console.log/debug statements
