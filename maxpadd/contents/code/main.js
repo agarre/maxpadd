@@ -11,13 +11,12 @@ const gapPercent = Math.max(50, Math.min(100, readConfig("gapPercent", 90)));
 
 // --- Core ---
 
+// AIDEV-NOTE: KWin 6 has no window.maximized property — use maximizedAboutToChange(mode)
+// MaximizeMode: 0 = restore, 3 = fully maximized (horizontal + vertical)
 function applyGap(win) {
     if (!win || !win.normalWindow) return;
     if (win.fullScreen) return;
     if (gapPercent >= 100) return;
-
-    // AIDEV-NOTE: Use maximized property instead of geometry comparison for reliability
-    if (!win.maximized) return;
 
     const area = workspace.clientArea(KWin.MaximizeArea, win);
     const factor = gapPercent / 100.0;
@@ -36,8 +35,12 @@ function applyGap(win) {
 // --- Signal connections per window ---
 
 function connectWindow(win) {
-    applyGap(win);
-    win.maximizedChanged.connect(function () { applyGap(win); });
+    win.maximizedAboutToChange.connect(function (mode) {
+        // AIDEV-NOTE: mode 3 = fully maximized; apply gap after KWin finishes via callLater
+        if (mode === 3) {
+            Qt.callLater(function () { applyGap(win); });
+        }
+    });
 }
 
 // --- Init: connect existing + new windows ---
