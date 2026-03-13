@@ -4,7 +4,7 @@
 
 KWin Script em JavaScript puro que adiciona padding configurável (em %) ao redor de janelas maximizadas no KDE Plasma 6 + Wayland.
 
-**Nome do script:** `maximized-window-gap-p6`
+**Nome do script:** `maxpadd`
 **Linguagem:** JavaScript (ECMAScript — linguagem nativa do KWin Scripting)
 **Target:** KDE Plasma 6.x, KWin 6.x, Wayland e X11
 **Licença:** GPL-3.0
@@ -14,7 +14,7 @@ KWin Script em JavaScript puro que adiciona padding configurável (em %) ao redo
 ## Estrutura de arquivos
 
 ```
-maximized-window-gap-p6/
+maxpadd/
 ├── contents/
 │   ├── code/
 │   │   └── main.js          ← Lógica principal
@@ -34,7 +34,7 @@ maximized-window-gap-p6/
 ```json
 {
     "KPlugin": {
-        "Id": "maximized-window-gap-p6",
+        "Id": "maxpadd",
         "Name": "Maximized Window Gap",
         "Description": "Adds configurable padding around maximized windows",
         "Authors": [
@@ -46,7 +46,7 @@ maximized-window-gap-p6/
         "Category": "Window Management",
         "License": "GPL-3.0",
         "Version": "1.0.0",
-        "Website": "https://github.com/SEU_USER/maximized-window-gap-p6"
+        "Website": "https://github.com/SEU_USER/maxpadd"
     },
     "X-Plasma-API": "javascript",
     "X-Plasma-MainScript": "contents/code/main.js",
@@ -194,20 +194,20 @@ Isso é intencional — a janela fica posicionada como se estivesse maximizada, 
 
 ```bash
 mkdir -p ~/.local/share/kwin/scripts/
-ln -s /caminho/do/projeto/maximized-window-gap-p6 \
-      ~/.local/share/kwin/scripts/maximized-window-gap-p6
+ln -s /caminho/do/projeto/maxpadd \
+      ~/.local/share/kwin/scripts/maxpadd
 ```
 
 ### Método 2: kpackagetool6
 
 ```bash
-kpackagetool6 --type=KWin/Script -i ./maximized-window-gap-p6/
+kpackagetool6 --type=KWin/Script -i ./maxpadd/
 ```
 
 ### Ativar o script
 
 ```bash
-kwriteconfig6 --file kwinrc --group Plugins --key maximized-window-gap-p6Enabled true
+kwriteconfig6 --file kwinrc --group Plugins --key maxpaddEnabled true
 qdbus6 org.kde.KWin /KWin reconfigure
 ```
 
@@ -260,7 +260,7 @@ Também: abrir `kdebugsettings` e ativar "KWin Scripting" em Full Debug.
 
 ### KDE Store
 
-1. Zipar a pasta: `cd maximized-window-gap-p6 && zip -r ../maximized-window-gap-p6.kwinscript .`
+1. Zipar a pasta: `cd maxpadd && zip -r ../maxpadd.kwinscript .`
 2. Upload em: https://store.kde.org → Linux/Unix Desktops → Window Managers → KWin → KWin scripts
 
 ### AUR (Arch Linux)
@@ -268,22 +268,22 @@ Também: abrir `kdebugsettings` e ativar "KWin Scripting" em Full Debug.
 Criar PKGBUILD:
 
 ```bash
-pkgname=kwin-scripts-maximized-window-gap-p6
+pkgname=kwin-scripts-maxpadd
 pkgver=1.0.0
 pkgrel=1
 pkgdesc="Adds configurable padding around maximized windows (Plasma 6)"
 arch=('any')
-url="https://github.com/SEU_USER/maximized-window-gap-p6"
+url="https://github.com/SEU_USER/maxpadd"
 license=('GPL-3.0-only')
 depends=('kwin')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
 sha256sums=('SKIP')
 
 package() {
-    cd "maximized-window-gap-p6-$pkgver"
-    install -dm755 "$pkgdir/usr/share/kwin/scripts/maximized-window-gap-p6"
+    cd "maxpadd-$pkgver"
+    install -dm755 "$pkgdir/usr/share/kwin/scripts/maxpadd"
     cp -r contents metadata.json LICENSE \
-        "$pkgdir/usr/share/kwin/scripts/maximized-window-gap-p6/"
+        "$pkgdir/usr/share/kwin/scripts/maxpadd/"
 }
 ```
 

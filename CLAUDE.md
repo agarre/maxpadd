@@ -4,17 +4,17 @@
 
 KWin Script (pure JavaScript) that adds configurable padding around maximized windows on KDE Plasma 6 + Wayland/X11.
 
-- **Script ID:** `maximized-window-gap-p6`
+- **Script ID:** `maxpadd`
 - **Language:** JavaScript (ECMAScript — KWin Scripting native). NO TypeScript, NO QML, NO npm.
 - **Target:** KDE Plasma ≥ 6.0, KWin ≥ 6.0
 - **License:** GPL-3.0
-- **Author:** Hugo Breda / Agarre Tecnologia
+- **Author:** Hugo Breda Schneweiss (hbreda@gmail.com)
 
 ## Repository Structure
 
 ```
 maxpadd/
-├── maximized-window-gap-p6/   ← KWin script package (installable)
+├── maxpadd/   ← KWin script package (installable)
 │   ├── contents/
 │   │   ├── code/
 │   │   │   └── main.js        ← Main script logic
@@ -52,6 +52,7 @@ maxpadd/
 - `readConfig(key, default)` — read script config
 - `workspace.clientArea(KWin.MaximizeArea, window)` — get maximize area per-screen
 - `workspace.windowAdded` / `workspace.windowRemoved` — window lifecycle signals
+- `window.maximized` — boolean, true if fully maximized (Plasma 6)
 - `window.maximizedChanged` — per-window maximize state signal (Plasma 6)
 - `window.frameGeometry` — read/write window geometry (QRectF)
 - `Qt.rect(x, y, w, h)` — create QRectF objects
@@ -66,14 +67,14 @@ maxpadd/
 
 ```bash
 # Install via symlink
-ln -s $(pwd)/maximized-window-gap-p6 ~/.local/share/kwin/scripts/maximized-window-gap-p6
+ln -s $(pwd)/maxpadd ~/.local/share/kwin/scripts/maxpadd
 
 # Enable
-kwriteconfig6 --file kwinrc --group Plugins --key maximized-window-gap-p6Enabled true
+kwriteconfig6 --file kwinrc --group Plugins --key maxpaddEnabled true
 qdbus6 org.kde.KWin /KWin reconfigure
 
 # Watch logs
-journalctl _COMM=kwin_wayland -f | grep -i gap
+journalctl -f QT_CATEGORY=js QT_CATEGORY=kwin_scripting
 ```
 
 ### Testing Checklist

@@ -13,7 +13,7 @@ You are building a KWin Script for KDE Plasma 6 (KWin 6.x) that adds configurabl
 Create exactly this file tree:
 
 ```
-maximized-window-gap-p6/
+maxpadd/
 ├── contents/
 │   ├── code/
 │   │   └── main.js
@@ -94,7 +94,7 @@ window.frameGeometry = Qt.rect(newX, newY, newWidth, newHeight)
 ```json
 {
     "KPlugin": {
-        "Id": "maximized-window-gap-p6",
+        "Id": "maxpadd",
         "Name": "Maximized Window Gap",
         "Description": "Adds configurable padding around maximized windows (Plasma 6)",
         "Authors": [
@@ -106,7 +106,7 @@ window.frameGeometry = Qt.rect(newX, newY, newWidth, newHeight)
         "Category": "Window Management",
         "License": "GPL-3.0",
         "Version": "1.0.0",
-        "Website": "https://github.com/agaborges/maximized-window-gap-p6"
+        "Website": "https://github.com/agaborges/maxpadd"
     },
     "X-Plasma-API": "javascript",
     "X-Plasma-MainScript": "contents/code/main.js",
@@ -202,10 +202,10 @@ After creating all files, the developer should test with:
 ```bash
 # Install via symlink
 mkdir -p ~/.local/share/kwin/scripts/
-ln -s $(pwd)/maximized-window-gap-p6 ~/.local/share/kwin/scripts/maximized-window-gap-p6
+ln -s $(pwd)/maxpadd ~/.local/share/kwin/scripts/maxpadd
 
 # Enable
-kwriteconfig6 --file kwinrc --group Plugins --key maximized-window-gap-p6Enabled true
+kwriteconfig6 --file kwinrc --group Plugins --key maxpaddEnabled true
 qdbus6 org.kde.KWin /KWin reconfigure
 
 # Watch logs
