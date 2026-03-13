@@ -12,6 +12,9 @@ var defaultIgnored = ["plasmashell", "krunner", "spectacle", "org.kde.spectacle"
 var winState = {}; // { internalId: { gapped: bool, geo: {x,y,width,height} } }
 var busy = {};
 
+// AIDEV-NOTE tolerance for fractional scaling (frameGeometry returns floats)
+function near(a, b) { return Math.abs(a - b) < 2; }
+
 function getGapSize() {
     return Math.max(0, readConfig("gapSize", 15));
 }
@@ -42,7 +45,7 @@ function applyGap(win) {
 
     var area = workspace.clientArea(KWin.MaximizeArea, win);
     var g = win.frameGeometry;
-    if (g.width !== area.width || g.height !== area.height) return;
+    if (!near(g.width, area.width) || !near(g.height, area.height)) return;
 
     busy[wid] = true;
     var st = winState[wid];
@@ -74,13 +77,13 @@ function saveGeo(win) {
     if (st && st.gapped) return;
     var area = workspace.clientArea(KWin.MaximizeArea, win);
     var g = win.frameGeometry;
-    if (g.width === area.width && g.height === area.height) return;
+    if (near(g.width, area.width) && near(g.height, area.height)) return;
     // AIDEV-NOTE skip stale gapped geometry from previous script instance
     var mL = g.x - area.x;
     var mR = (area.x + area.width) - (g.x + g.width);
     var mT = g.y - area.y;
     var mB = (area.y + area.height) - (g.y + g.height);
-    if (mL > 0 && mL === mR && mL === mT && mL === mB) return;
+    if (mL > 0 && near(mL, mR) && near(mL, mT) && near(mL, mB)) return;
     winState[wid] = {gapped: false, geo: {x: g.x, y: g.y, width: g.width, height: g.height}};
 }
 
