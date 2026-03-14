@@ -1,4 +1,3 @@
-# Ignore markdown files except root ones
+# Ignore markdown files except README
 *.md
-!/CLAUDE.md
 !/README.md
