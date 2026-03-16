@@ -53,13 +53,67 @@
                                 </layout>
                             </item>
                             <item>
-                                <widget class="QCheckBox" name="kcfg_compensateDock">
-                                    <property name="text">
-                                        <string>Compensate dock floating margin (keeps panel floating)</string>
+                                <widget class="QGroupBox" name="groupDockCompensation">
+                                    <property name="title">
+                                        <string>Dock compensation</string>
                                     </property>
-                                    <property name="toolTip">
-                                        <string>Adds extra gap on the panel side to prevent the floating panel from de-floating. Enable if your panel loses its floating appearance when windows are maximized.</string>
-                                    </property>
+                                    <layout class="QFormLayout" name="dockForm">
+                                        <item row="0" column="0">
+                                            <widget class="QLabel" name="labelDockMode">
+                                                <property name="text">
+                                                    <string>Dock compensation:</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item row="0" column="1">
+                                            <widget class="QComboBox" name="kcfg_compensateDockMode">
+                                                <property name="toolTip">
+                                                    <string>Adds extra gap on the panel side to prevent the floating panel from de-floating.</string>
+                                                </property>
+                                                <item>
+                                                    <property name="text">
+                                                        <string>Off</string>
+                                                    </property>
+                                                </item>
+                                                <item>
+                                                    <property name="text">
+                                                        <string>Maximized windows only</string>
+                                                    </property>
+                                                </item>
+                                                <item>
+                                                    <property name="text">
+                                                        <string>All windows</string>
+                                                    </property>
+                                                </item>
+                                            </widget>
+                                        </item>
+                                        <item row="1" column="0">
+                                            <widget class="QLabel" name="labelDockMargin">
+                                                <property name="text">
+                                                    <string>Dock margin:</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item row="1" column="1">
+                                            <widget class="QSpinBox" name="kcfg_dockMargin">
+                                                <property name="toolTip">
+                                                    <string>Extra gap in pixels on the dock side. Prevents the floating panel from losing its floating appearance.</string>
+                                                </property>
+                                                <property name="minimum">
+                                                    <number>10</number>
+                                                </property>
+                                                <property name="maximum">
+                                                    <number>20</number>
+                                                </property>
+                                                <property name="value">
+                                                    <number>12</number>
+                                                </property>
+                                                <property name="suffix">
+                                                    <string> px</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
                                 </widget>
                             </item>
                             <item>
