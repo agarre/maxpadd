@@ -1,3 +1,6 @@
 # Ignore markdown files except README
 *.md
 !/README.md
+
+# Temp folder for study/reference
+temp/

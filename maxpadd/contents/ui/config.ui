@@ -53,6 +53,16 @@
                                 </layout>
                             </item>
                             <item>
+                                <widget class="QCheckBox" name="kcfg_compensateDock">
+                                    <property name="text">
+                                        <string>Compensate dock floating margin (keeps panel floating)</string>
+                                    </property>
+                                    <property name="toolTip">
+                                        <string>Adds extra gap on the panel side to prevent the floating panel from de-floating. Enable if your panel loses its floating appearance when windows are maximized.</string>
+                                    </property>
+                                </widget>
+                            </item>
+                            <item>
                                 <spacer name="paddingSpacer">
                                     <property name="orientation">
                                         <enum>Qt::Vertical</enum>

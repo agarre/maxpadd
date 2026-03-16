@@ -11,5 +11,8 @@
         <entry name="ignoredApps" type="String">
             <default></default>
         </entry>
+        <entry name="compensateDock" type="Bool">
+            <default>false</default>
+        </entry>
     </group>
 </kcfg>
