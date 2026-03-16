@@ -13,7 +13,7 @@
         "Id": "maxpadd",
         "Category": "Window Management",
         "License": "GPL-3.0",
-        "Version": "1.1.0",
+        "Version": "1.2.0",
         "Website": "https://github.com/agarre/maxpadd"
     },
     "X-Plasma-API": "javascript",
