@@ -7,9 +7,14 @@ Instead of windows taking up the entire screen when maximized, maxpadd shrinks t
 ## What it does
 
 - Adds a gap (padding) around maximized windows, in pixels
-- Configurable gap size (0–200 px, default 15 px)
+- Configurable gap size (0-200 px, default 15 px)
+- **Dock compensation** — keeps your floating panel floating, even with small gaps
+  - Three modes: Off / Maximized only / All windows
+  - Works with any tiling manager (KZones, native KWin tiling, etc.)
+  - Configurable dock margin (10-20 px)
+- **Fractional scaling support** — works correctly on HiDPI displays
+- **Fullscreen aware** — never interferes with F11 fullscreen, games, or presentations
 - Works on multiple monitors independently
-- Skips fullscreen apps (games, videos, etc.)
 - Skips dialogs and system windows — only touches regular windows
 - Ignore list: plasma internals are always excluded, and you can add your own apps
 - Toggle: maximize a gapped window again to restore its original size
@@ -25,14 +30,12 @@ Instead of windows taking up the entire screen when maximized, maxpadd shrinks t
 ### Option 1: Symlink (for dev / tinkering)
 
 ```bash
-# From the repo root:
 ln -s "$(pwd)/maxpadd" ~/.local/share/kwin/scripts/maxpadd
 ```
 
 ### Option 2: Copy
 
 ```bash
-# From the repo root:
 cp -r maxpadd ~/.local/share/kwin/scripts/
 ```
 
@@ -56,23 +59,37 @@ After enabling, go to **System Settings > Window Management > KWin Scripts**, fi
   - `0` = no gap (normal maximize behavior)
   - `200` = maximum gap
 
+- **Dock compensation:** prevents the floating panel from losing its floating appearance.
+  - `Off` = no compensation
+  - `Maximized windows only` = adds extra gap on the panel side for maximized windows
+  - `All windows` = also compensates tiled and snapped windows near the panel
+
+- **Dock margin (px):** how many extra pixels to add on the panel side (10-20, default 12). Increase if your panel still de-floats.
+
 ### Ignored Apps tab
 
 Some apps are always ignored (plasmashell, krunner, spectacle, etc.). You can add extra apps as a comma-separated list of window class names (e.g. `discord, steam, gimp`).
 
 To find an app's window class, run `xprop WM_CLASS` and click the window, or check `qdbus6 org.kde.KWin /KWin queryWindowInfo`.
 
-## Pairs well with KZones
+## Reloading after config changes
 
-If you use [KZones](https://github.com/gerritdevriese/kzones) for tiling / snap layouts, maxpadd is a great complement — KZones handles tiling zones while maxpadd gives your maximized windows a comfortable gap. They work independently and don't conflict.
+KWin doesn't reload scripts on `reconfigure`. Use the included helper:
+
+```bash
+./reload.sh         # reloads maxpadd
+./reload.sh kzones  # reloads any other KWin script
+```
 
 ## How it works
 
-When you maximize a window, maxpadd intercepts it, un-maximizes it, and resizes it to the screen area minus the configured gap on each side. It also reacts to screen layout changes (plugging in a monitor, etc.) so your gaps stay consistent.
+When you maximize a window, maxpadd intercepts it, un-maximizes it, and resizes it to the screen area minus the configured gap on each side. It reacts to screen layout changes (plugging in a monitor, etc.) so your gaps stay consistent.
 
-Maximizing a gapped window a second time restores it to its original pre-maximize geometry.
+Maximizing a gapped window a second time restores it to its original size.
 
-It's a tiny plain JavaScript file. No dependencies, no build step, no bloat.
+With dock compensation enabled, maxpadd also monitors all windows and nudges any that get too close to the floating panel's invisible detection zone — keeping your panel pretty.
+
+It's a tiny plain JavaScript file (~120 lines). No dependencies, no build step, no bloat.
 
 ## Troubleshooting
 
