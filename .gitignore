@@ -2,5 +2,8 @@
 *.md
 !/README.md
 
+# Build artifacts
+*.zip
+
 # Temp folder for study/reference
 temp/
