@@ -17,12 +17,12 @@ Instead of windows taking up the entire screen when maximized, maxpadd shrinks t
 - Works on multiple monitors independently
 - Skips dialogs and system windows — only touches regular windows
 - Ignore list: plasma internals are always excluded, and you can add your own apps
-- Toggle: maximize a gapped window again to restore its original size
+- Native restore: the window stays genuinely maximized, so the app's own restore button works as usual
 
 ## Requirements
 
-- KDE Plasma 6.0+
-- KWin 6.0+
+- KDE Plasma 6.7+
+- KWin 6.7+
 - Wayland or X11
 
 ## Install
@@ -83,9 +83,7 @@ KWin doesn't reload scripts on `reconfigure`. Use the included helper:
 
 ## How it works
 
-When you maximize a window, maxpadd intercepts it, un-maximizes it, and resizes it to the screen area minus the configured gap on each side. It reacts to screen layout changes (plugging in a monitor, etc.) so your gaps stay consistent.
-
-Maximizing a gapped window a second time restores it to its original size.
+When you maximize a window, maxpadd resizes it in place to the screen area minus the configured gap on each side — the window stays genuinely maximized (this needs KWin 6.7+). Because the maximized state is never touched, every app's own maximize/restore button keeps working, and restoring is handled natively by KWin. It reacts to screen layout changes (plugging in a monitor, etc.) so your gaps stay consistent.
 
 With dock compensation enabled, maxpadd also monitors all windows and nudges any that get too close to the floating panel's invisible detection zone — keeping your panel pretty.
 
