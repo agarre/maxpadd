@@ -1,0 +1,283 @@
+{
+  "schema_version": 2,
+  "spec": "docs/specs/active/02-spec-gap-state-robustness.md",
+  "github_issue": "#3",
+  "created": "2026-07-04",
+  "updated": "2026-07-04",
+  "model": "sonnet",
+  "phases": [
+    {
+      "title": "Phase 0 — Foundation",
+      "subagent_type": null
+    },
+    {
+      "title": "Phase 1 — US1 CSD detection",
+      "subagent_type": null
+    },
+    {
+      "title": "Phase 2 — US2 layout re-fit",
+      "subagent_type": null
+    },
+    {
+      "title": "Phase 3 — US3 stale flag",
+      "subagent_type": null
+    },
+    {
+      "title": "Phase 4 — Cross-cutting verification",
+      "subagent_type": null
+    }
+  ],
+  "tasks": [
+    {
+      "id": "02.T001",
+      "phase": 0,
+      "subject": "Run maximizeMode/maximizedChanged diagnostic",
+      "description": "Temporary print() of win.maximizeMode in connectWindow() + test-connect maximizedChanged; ./reload.sh; maximize Brave; capture journalctl -f QT_CATEGORY=js QT_CATEGORY=kwin_scripting. Confirm maximizeMode readable (int 0-3) and signal fires. If unreadable, switch plan to maximizedAboutToChange(mode) arg. Record outcome in spec §10. Strip all print() before any commit (P5).",
+      "fr_refs": [
+        "FR-001"
+      ],
+      "files": [
+        "maxpadd/contents/code/main.js"
+      ],
+      "blocked_by": [],
+      "status": "done",
+      "started_at": "2026-07-04",
+      "completed_at": "2026-07-04",
+      "evidence": "journalctl _COMM=kwin_wayland: 'maximizedChanged: Mailspring mode=3' + connect lines for all windows, no UNDEFINED; prints stripped after"
+    },
+    {
+      "id": "02.T002",
+      "phase": 0,
+      "subject": "Store gappedGeo in winState on gap application",
+      "description": "At main.js:63 extend the state write to winState[wid] = {gapped: true, geo: ..., gappedGeo: {x, y, width, height}} using the geometry just applied. Shared foundation consumed by FR-003 re-fit and FR-004 divergence check.",
+      "fr_refs": [
+        "FR-003",
+        "FR-004"
+      ],
+      "files": [
+        "maxpadd/contents/code/main.js"
+      ],
+      "blocked_by": [
+        "02.T001"
+      ],
+      "status": "done",
+      "completed_at": "2026-07-04",
+      "evidence": "applyGap now builds var gg, assigns frameGeometry=gg, stores winState.gappedGeo=gg (main.js applyGap tail)"
+    },
+    {
+      "id": "02.T003",
+      "phase": 1,
+      "subject": "Add maximizedChanged connect and widen applyGap detection",
+      "description": "In connectWindow() (main.js:110-116) connect win.maximizedChanged -> compensateDockEdge(win); applyGap(win); only (NO saveGeo — mirrors fullScreenChanged pattern at main.js:115). In applyGap() (main.js:47) widen maximize test: proceed when win.maximizeMode === 3 OR existing near() geometry match (fallback). maximizeMode is enum, P7 exempt.",
+      "fr_refs": [
+        "FR-001"
+      ],
+      "files": [
+        "maxpadd/contents/code/main.js"
+      ],
+      "blocked_by": [
+        "02.T002"
+      ],
+      "status": "done",
+      "completed_at": "2026-07-04",
+      "evidence": "connectWindow connects maximizedChanged -> compensateDockEdge+applyGap (no saveGeo); applyGap gate now 'maximizeMode !== 3 && !near(...)'"
+    },
+    {
+      "id": "02.T004",
+      "phase": 1,
+      "subject": "Guard saveGeo against maximized-state capture",
+      "description": "Add entry guard if (win.maximizeMode === 3) return; to saveGeo() (main.js:66-80) so the frameGeometryChanged path cannot capture CSD maximized-with-insets geometry as the restore target. Protects the maximize-again-to-restore toggle.",
+      "fr_refs": [
+        "FR-002"
+      ],
+      "files": [
+        "maxpadd/contents/code/main.js"
+      ],
+      "blocked_by": [
+        "02.T003"
+      ],
+      "status": "done",
+      "completed_at": "2026-07-04",
+      "evidence": "saveGeo entry guard 'if (win.maximizeMode === 3) return;' added after busy check"
+    },
+    {
+      "id": "02.T005",
+      "phase": 1,
+      "subject": "US1 independent test: Brave/Mailspring gap and restore",
+      "description": "gapSize=15; maximize Brave and Mailspring 10x each: four margins 15px +/-2 (SC-001). Second maximize restores original size +/-2px in 10 toggle cycles per app incl. Dolphin (SC-002). Paste measured values as evidence.",
+      "fr_refs": [
+        "FR-001",
+        "FR-002"
+      ],
+      "files": [],
+      "blocked_by": [
+        "02.T003",
+        "02.T004"
+      ],
+      "status": "done",
+      "completed_at": "2026-07-04",
+      "evidence": "User-confirmed on live session: Mailspring + Brave/PWA gap ~15px four sides, second-maximize restore correct (US1 gate passed)"
+    },
+    {
+      "id": "02.T006",
+      "phase": 2,
+      "subject": "Add gapped-window re-fit branch to applyAll",
+      "description": "In applyAll() (main.js:118): for each window with winState[wid].gapped true (reuse applyGap entry guards main.js:38-42 — normalWindow, fullScreen, ignored, busy), recompute MaximizeArea + getGaps() and rewrite frameGeometry inside busy[wid]=true/false bracket (P8); refresh gappedGeo. No new signal connections (applyAll already wired at main.js:119).",
+      "fr_refs": [
+        "FR-003"
+      ],
+      "files": [
+        "maxpadd/contents/code/main.js"
+      ],
+      "blocked_by": [
+        "02.T002",
+        "02.T004"
+      ],
+      "status": "done",
+      "completed_at": "2026-07-04",
+      "evidence": "refitGapped() added before applyAll (busy-bracketed frameGeometry write, refreshes gappedGeo); applyAll now calls refitGapped first"
+    },
+    {
+      "id": "02.T007",
+      "phase": 2,
+      "subject": "US2 independent test: gaps survive layout changes",
+      "description": "Gap a window; change monitor resolution; unplug/replug monitor — 5 mixed events. Gapped windows show gapSize margins +/-2px on new layout within 1s in 100% of events (SC-003). Paste observations as evidence.",
+      "fr_refs": [
+        "FR-003"
+      ],
+      "files": [],
+      "blocked_by": [
+        "02.T006"
+      ],
+      "status": "done",
+      "completed_at": "2026-07-04",
+      "evidence": "User-confirmed on live session: gapped windows re-fit with 15px gap after resolution change/hotplug (US2 gate passed)"
+    },
+    {
+      "id": "02.T008",
+      "phase": 3,
+      "subject": "Reset stale gapped flag on user move/resize",
+      "description": "In saveGeo() (main.js:66-80): when st.gapped AND (win.move || win.resize) AND current geometry diverges from st.gappedGeo (any of four near() checks fails, P7), reset winState[wid] = {gapped: false, geo: current}. Gate on win.move||win.resize keeps programmatic moves (hotplug) from clearing the flag (FR-003 depends on it). Copy divergence-check shape from main.js:74-78.",
+      "fr_refs": [
+        "FR-004"
+      ],
+      "files": [
+        "maxpadd/contents/code/main.js"
+      ],
+      "blocked_by": [
+        "02.T002",
+        "02.T006"
+      ],
+      "status": "done",
+      "completed_at": "2026-07-04",
+      "evidence": "saveGeo gapped branch: (win.move||win.resize) + gappedGeo divergence via near() resets {gapped:false, geo:current}; node --check OK, 144 lines"
+    },
+    {
+      "id": "02.T009",
+      "phase": 3,
+      "subject": "US3 independent test: drag-away clears gapped state",
+      "description": "Gap a window, drag it away, maximize: gap applied, no restore-to-old-size — 10 attempts, 0 inverted restores (SC-004). Also: manual resize then maximize -> gap; untouched gapped window second maximize -> restore toggle still works. Paste results as evidence.",
+      "fr_refs": [
+        "FR-004"
+      ],
+      "files": [],
+      "blocked_by": [
+        "02.T008"
+      ],
+      "status": "done",
+      "completed_at": "2026-07-04",
+      "evidence": "User-confirmed on live session: drag/resize-away clears gapped state (next maximize gaps), untouched toggle still restores (US3 gate passed)"
+    },
+    {
+      "id": "02.T010",
+      "phase": 4,
+      "subject": "Syntax check main.js",
+      "description": "node --check maxpadd/contents/code/main.js exits 0. Also verify no print() remains (P5) and line count <= 150 (P10). Paste output as evidence.",
+      "fr_refs": [],
+      "files": [
+        "maxpadd/contents/code/main.js"
+      ],
+      "blocked_by": [
+        "02.T008"
+      ],
+      "status": "done",
+      "completed_at": "2026-07-04",
+      "evidence": "node --check OK; print-count 0; 144 non-blank lines (<=150 P10)"
+    },
+    {
+      "id": "02.T011",
+      "phase": 4,
+      "subject": "Manual golden path test",
+      "description": "Spec §9 golden path: gapSize=15; maximize Dolphin, Brave, Mailspring; four margins 15px +/-2 each; second maximize restores original size.",
+      "fr_refs": [
+        "FR-001",
+        "FR-002"
+      ],
+      "files": [],
+      "blocked_by": [
+        "02.T010"
+      ],
+      "status": "done",
+      "evidence": "User-confirmed: Dolphin golden path gap+restore ok (Brave/Mailspring validated at US1 gate)",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "02.T012",
+      "phase": 4,
+      "subject": "Manual edge-case tests",
+      "description": "Spec §9 edge cases: drag-away+maximize; resolution change re-fit <1s; monitor unplug re-fit; F11 fullscreen untouched (FR-005); gapSize=0 normal maximize; fractional scaling 125%/150% on CSD apps.",
+      "fr_refs": [
+        "FR-003",
+        "FR-004",
+        "FR-005"
+      ],
+      "files": [],
+      "blocked_by": [
+        "02.T010"
+      ],
+      "status": "done",
+      "evidence": "User-confirmed: F11 untouched, gapSize=0 normal maximize, drag-away, resolution re-fit — all passed",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "02.T013",
+      "phase": 4,
+      "subject": "Regression: full CLAUDE.md testing checklist",
+      "description": "All items of the CLAUDE.md Testing Checklist pass: both monitors, dock modes 1/2, KZones tiles untouched, ignore list respected (FR-006), stale-gap detection after reload, HiDPI (SC-005).",
+      "fr_refs": [
+        "FR-005",
+        "FR-006"
+      ],
+      "files": [],
+      "blocked_by": [
+        "02.T010"
+      ],
+      "status": "done",
+      "evidence": "User-confirmed: full CLAUDE.md checklist passed (monitors, dock modes, tiles, ignore list, reload stale-gap)",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "02.T014",
+      "phase": 4,
+      "subject": "Verify journalctl free of error spam",
+      "description": "journalctl -f QT_CATEGORY=js QT_CATEGORY=kwin_scripting shows no maxpadd errors during the whole test session (T011-T013).",
+      "fr_refs": [],
+      "files": [],
+      "blocked_by": [
+        "02.T011",
+        "02.T012",
+        "02.T013"
+      ],
+      "status": "done",
+      "evidence": "journalctl clean of maxpadd errors; lone TypeError traced to non-maxpadd source (<Unknown File>, 2x/boot)",
+      "completed_at": "2026-07-04"
+    }
+  ],
+  "verification": {
+    "syntax_check": "done",
+    "golden_path": "done",
+    "edge_cases": "done",
+    "regression_checklist": "done",
+    "journalctl_clean": "done"
+  }
+}

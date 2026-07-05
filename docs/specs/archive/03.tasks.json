@@ -1,0 +1,240 @@
+{
+  "schema_version": 2,
+  "spec": "docs/specs/active/03-spec-state-hygiene.md",
+  "github_issue": "#4",
+  "created": "2026-07-04",
+  "updated": "2026-07-04",
+  "model": "sonnet",
+  "phases": [
+    {
+      "title": "Phase 0 — Foundation",
+      "subagent_type": null
+    },
+    {
+      "title": "Phase 1 — US1 reload-safe restore",
+      "subagent_type": null
+    },
+    {
+      "title": "Phase 2 — US2 close cleanup",
+      "subagent_type": null
+    },
+    {
+      "title": "Phase 3 — US3 nudge tolerance",
+      "subagent_type": null
+    },
+    {
+      "title": "Phase 4 — Cross-cutting verification",
+      "subagent_type": null
+    }
+  ],
+  "tasks": [
+    {
+      "id": "03.T001",
+      "phase": 0,
+      "subject": "Extend near() with optional epsilon",
+      "description": "main.js:10 -> function near(a, b, e) { return Math.abs(a - b) < (e || 2); }. Backward compatible; foundation for FR-001 (epsilon-6 stale check) and FR-003 (threshold guard).",
+      "fr_refs": [
+        "FR-001",
+        "FR-003"
+      ],
+      "files": [
+        "maxpadd/contents/code/main.js"
+      ],
+      "blocked_by": [],
+      "status": "done",
+      "evidence": "near(a,b,e) with (e||2) at main.js:10; all existing call sites unchanged",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "03.T002",
+      "phase": 1,
+      "subject": "Loosen stale-gap detection to epsilon 6",
+      "description": "In saveGeo stale-gap detection (main.js:90) call near(mL, gaps.l, 6) / near(mR, gaps.r, 6) / near(mT, gaps.t, 6) / near(mB, gaps.b, 6) so CSD windows settled a few px off are recognized as gap-shaped and skipped. FR-001.",
+      "fr_refs": [
+        "FR-001"
+      ],
+      "files": [
+        "maxpadd/contents/code/main.js"
+      ],
+      "blocked_by": [
+        "03.T001"
+      ],
+      "status": "done",
+      "evidence": "saveGeo stale-gap check uses near(m*, gaps.*, 6) on all four margins",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "03.T003",
+      "phase": 1,
+      "subject": "US1 test: reload-safe restore",
+      "description": "Gap Mailspring, ./reload.sh, maximize twice: returns true pre-maximize size +/-2px, 5 cycles, 100% (SC-001). Evidence: user confirmation.",
+      "fr_refs": [
+        "FR-001"
+      ],
+      "files": [],
+      "blocked_by": [
+        "03.T002"
+      ],
+      "status": "done",
+      "evidence": "User-confirmed: post-reload toggle restores true original size (US1 gate passed)",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "03.T004",
+      "phase": 2,
+      "subject": "Connect windowRemoved cleanup",
+      "description": "After main.js:131 add workspace.windowRemoved.connect(function (win) { var wid = String(win.internalId); delete winState[wid]; delete busy[wid]; }); + AIDEV-NOTE. Validate symbol fires with a temporary print(), strip before commit (P5). FR-002.",
+      "fr_refs": [
+        "FR-002"
+      ],
+      "files": [
+        "maxpadd/contents/code/main.js"
+      ],
+      "blocked_by": [
+        "03.T002"
+      ],
+      "status": "done",
+      "evidence": "workspace.windowRemoved connected, deletes winState+busy; validated live with temp print (20/20 removals fired), print stripped",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "03.T005",
+      "phase": 2,
+      "subject": "US2 test: state cleanup on close",
+      "description": "Temporary instrumented count of winState keys; open+close 20 windows: 0 lingering entries within 5s (SC-002). Strip instrumentation after. Evidence: journal count output.",
+      "fr_refs": [
+        "FR-002"
+      ],
+      "files": [],
+      "blocked_by": [
+        "03.T004"
+      ],
+      "status": "done",
+      "evidence": "Scripted test: 20 kdialog windows opened+killed, journal shows 20 'removed' lines, remaining count decremented 1 per close (SC-002)",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "03.T006",
+      "phase": 3,
+      "subject": "Add threshold tolerance to dock-edge nudge",
+      "description": "In compensateDockEdge (main.js:109-116) change each of the four 'dist < threshold' conditions to 'dist < threshold && !near(dist, threshold)' so windows at the threshold (+/-2px) are never re-nudged. FR-003.",
+      "fr_refs": [
+        "FR-003"
+      ],
+      "files": [
+        "maxpadd/contents/code/main.js"
+      ],
+      "blocked_by": [
+        "03.T001",
+        "03.T004"
+      ],
+      "status": "done",
+      "evidence": "Four nudge conditions now 'dist < threshold && !near(dist, threshold)' in compensateDockEdge; node --check OK, 149 non-blank lines",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "03.T007",
+      "phase": 3,
+      "subject": "US3 test: no jitter at threshold",
+      "description": "Mode 2; window at exact threshold distance from panel edge: 0 geometry writes in 60s with >=10 geometry events (SC-003). Evidence: user observation / journal.",
+      "fr_refs": [
+        "FR-003"
+      ],
+      "files": [],
+      "blocked_by": [
+        "03.T006"
+      ],
+      "status": "done",
+      "evidence": "User-confirmed: single nudge to threshold, zero spontaneous moves in 60s (US3 gate passed)",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "03.T008",
+      "phase": 4,
+      "subject": "Syntax check main.js",
+      "description": "node --check exits 0; no print() left (P5); <=150 non-blank lines (P10). Evidence: output.",
+      "fr_refs": [],
+      "files": [
+        "maxpadd/contents/code/main.js"
+      ],
+      "blocked_by": [
+        "03.T006"
+      ],
+      "status": "done",
+      "evidence": "node --check OK; print-count 0; 149 non-blank lines (<=150 P10)",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "03.T009",
+      "phase": 4,
+      "subject": "Manual golden path test",
+      "description": "Spec §9 golden path: gap Mailspring, reload, maximize twice -> true original size +/-2px (5 cycles).",
+      "fr_refs": [
+        "FR-001"
+      ],
+      "files": [],
+      "blocked_by": [
+        "03.T008"
+      ],
+      "status": "done",
+      "evidence": "User-confirmed: golden path re-passed after all changes (reload + toggle restores true size)",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "03.T010",
+      "phase": 4,
+      "subject": "Manual edge-case tests",
+      "description": "Spec §9 edge cases: 20 open/close -> 0 entries; threshold window 0 nudges in 60s; fractional scaling 125%/150% on boundary test.",
+      "fr_refs": [
+        "FR-002",
+        "FR-003"
+      ],
+      "files": [],
+      "blocked_by": [
+        "03.T008"
+      ],
+      "status": "done",
+      "evidence": "20 open/close scripted -> 20/20 cleaned (journal); threshold window static 60s; user-confirmed",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "03.T011",
+      "phase": 4,
+      "subject": "Regression: spec-02 set + CLAUDE.md checklist",
+      "description": "Spec-02 §9 regression set re-passes (CSD gap/restore, layout re-fit, drag-away reset) + full CLAUDE.md checklist (SC-004). FR-004.",
+      "fr_refs": [
+        "FR-004"
+      ],
+      "files": [],
+      "blocked_by": [
+        "03.T008"
+      ],
+      "status": "done",
+      "evidence": "User-confirmed: spec-02 regression set + CLAUDE.md checklist re-passed (SC-004)",
+      "completed_at": "2026-07-04"
+    },
+    {
+      "id": "03.T012",
+      "phase": 4,
+      "subject": "Verify journalctl free of error spam",
+      "description": "journalctl shows no maxpadd errors during the whole test session (T009-T011).",
+      "fr_refs": [],
+      "files": [],
+      "blocked_by": [
+        "03.T009",
+        "03.T010",
+        "03.T011"
+      ],
+      "status": "done",
+      "evidence": "journalctl: 0 errors, 0 residual diag prints in test window",
+      "completed_at": "2026-07-04"
+    }
+  ],
+  "verification": {
+    "syntax_check": "done",
+    "golden_path": "done",
+    "edge_cases": "done",
+    "regression_checklist": "done",
+    "journalctl_clean": "done"
+  }
+}
