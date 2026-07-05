@@ -25,6 +25,9 @@ Instead of windows taking up the entire screen when maximized, maxpadd shrinks t
 - KWin 6.7+
 - Wayland or X11
 
+> **Version note:** v2.x resizes maximized windows in place, which requires **KWin 6.7 or newer**.
+> On older Plasma 6 (6.0–6.6), use [v1.2.0](https://github.com/agarre/maxpadd/releases/tag/v1.2.0) instead.
+
 ## Install
 
 ### Option 1: Symlink (for dev / tinkering)
