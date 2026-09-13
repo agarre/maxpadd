@@ -3,11 +3,14 @@ var defaultIgnored = ["plasmashell", "krunner", "spectacle", "org.kde.spectacle"
     "polkit-kde-authentication-agent-1", "kscreen_osd_service",
     "ksplashqml", "ksmserver", "xdg-desktop-portal-kde"];
 var busy = {};
+var reqMode = {};   // requested maximize mode per window (maximizedAboutToChange), leads maximizeMode
+var armedAt = 0;    // last time a non-normal window (panel/dock) changed geometry → KWin rearrange follows
 var compensateDockMode = readConfig("compensateDockMode", readConfig("compensateDock", false) ? 1 : 0);
 var gapSize = Math.max(0, readConfig("gapSize", 15));
 var dockMargin = Math.min(20, Math.max(10, readConfig("dockMargin", 12)));
 // AIDEV-NOTE tolerance for fractional scaling (frameGeometry returns floats); optional e widens it (spec 03)
 function near(a, b, e) { return Math.abs(a - b) < (e || 2); }
+function same(g, t) { return near(g.x, t.x) && near(g.y, t.y) && near(g.width, t.width) && near(g.height, t.height); }
 var ignoredApps = (function () {
     var ui = readConfig("ignoredApps", "").toString().split(",")
         .map(function (s) { return s.trim().toLowerCase(); })
@@ -34,28 +37,48 @@ function getGaps(win) {
         r: g + ((m.x + m.width) < (s.x + s.width) ? dm : 0)
     };
 }
+// gapped target for a maximized window, or null when all gaps are zero
+function gapTarget(win) {
+    var gaps = getGaps(win);
+    if (gaps.t <= 0 && gaps.b <= 0 && gaps.l <= 0 && gaps.r <= 0) return null;
+    var a = workspace.clientArea(KWin.MaximizeArea, win);
+    return {x: a.x + gaps.l, y: a.y + gaps.t, width: a.width - gaps.l - gaps.r, height: a.height - gaps.t - gaps.b};
+}
+function eligible(win) {
+    if (!win || !win.normalWindow || win.fullScreen || win.maximizeMode !== 3) return false;
+    if (win.move || win.resize || isIgnored(win)) return false;
+    return !busy[String(win.internalId)];
+}
 // AIDEV-NOTE maxpadd/gap-v2 — resize maximized window IN PLACE; never setMaximize(false): the window stays
 // genuinely maximized, apps keep consistent state and restore is KWin-native (spec 05, requires KWin >= 6.7)
 function applyGap(win) {
-    if (!win || !win.normalWindow || win.fullScreen) return;
-    if (win.move || win.resize) return;
-    if (isIgnored(win)) return;
-    if (win.maximizeMode !== 3) return;
-    var wid = String(win.internalId);
-    if (busy[wid]) return;
-    var gaps = getGaps(win);
-    if (gaps.t <= 0 && gaps.b <= 0 && gaps.l <= 0 && gaps.r <= 0) return;
-    var area = workspace.clientArea(KWin.MaximizeArea, win);
-    var gg = {
-        x: area.x + gaps.l, y: area.y + gaps.t,
-        width: area.width - gaps.l - gaps.r, height: area.height - gaps.t - gaps.b
-    };
+    if (!eligible(win)) return;
+    var gg = gapTarget(win);
+    if (!gg) return;
     var g = win.frameGeometry;
     // AIDEV-NOTE maxpadd/idempotent — no write when already at target: kills loops + CSD event floods (spec 05 FR-003)
-    if (near(g.x, gg.x) && near(g.y, gg.y) && near(g.width, gg.width) && near(g.height, gg.height)) return;
+    if (same(g, gg)) return;
     // AIDEV-NOTE maxpadd/restore-race — maximizeMode lags frameGeometryChanged on unmaximize (like fullScreen race):
     // only gap a window actually sitting at MaximizeArea; geometry elsewhere + mode=3 = restore in flight, don't touch
-    if (!(near(g.x, area.x) && near(g.y, area.y) && near(g.width, area.width) && near(g.height, area.height))) return;
+    if (!same(g, workspace.clientArea(KWin.MaximizeArea, win))) return;
+    var wid = String(win.internalId);
+    busy[wid] = true;
+    win.frameGeometry = gg;
+    busy[wid] = false;
+}
+// AIDEV-NOTE maxpadd/preempt — any panel/strut geometry change ("fit content" panel grows on a new task) makes KWin
+// Workspace::rearrange() re-snap EVERY maximized window to MaximizeArea, synchronously after the panel's
+// frameGeometryChanged. The xdg configure goes out from a 0 ms timer and reads moveResizeGeometry at send time;
+// frameGeometryAboutToChange fires inside moveResize() before it. Re-writing the gap there overwrites
+// moveResizeGeometry, so the app's single configure already carries the gap: no full-area frame, no flash.
+// Guards: ≤10 ms after a non-normal window moved (rearrange measured 0-1 ms), window currently AT the gapped
+// geometry, no restore in flight (reqMode leads maximizeMode). Residual: fullscreen request inside that 10 ms.
+function preempt(win) {
+    if (Date.now() - armedAt > 10 || !eligible(win)) return;
+    var wid = String(win.internalId);
+    if (reqMode[wid] !== undefined && reqMode[wid] !== 3) return;
+    var gg = gapTarget(win);
+    if (!gg || !same(win.frameGeometry, gg)) return;
     busy[wid] = true;
     win.frameGeometry = gg;
     busy[wid] = false;
@@ -92,13 +115,19 @@ function compensateDockEdge(win) {
     busy[wid] = false;
 }
 function connectWindow(win) {
+    var wid = String(win.internalId);
     compensateDockEdge(win); applyGap(win);
-    win.frameGeometryChanged.connect(function () { compensateDockEdge(win); applyGap(win); });
+    win.frameGeometryChanged.connect(function () {
+        if (!win.normalWindow) { armedAt = Date.now(); return; }   // panel/dock moved → rearrange snap incoming
+        compensateDockEdge(win); applyGap(win);
+    });
+    win.frameGeometryAboutToChange.connect(function () { preempt(win); });
+    win.maximizedAboutToChange.connect(function (mode) { reqMode[wid] = mode; });
     win.maximizedChanged.connect(function () { compensateDockEdge(win); applyGap(win); });
     win.fullScreenChanged.connect(function () { applyGap(win); });
 }
 workspace.windowList().forEach(connectWindow); workspace.windowAdded.connect(connectWindow);
-// AIDEV-NOTE maxpadd/state-cleanup — busy flags only; no other per-window state exists in v2 (spec 05 FR-008)
-workspace.windowRemoved.connect(function (win) { delete busy[String(win.internalId)]; });
+// AIDEV-NOTE maxpadd/state-cleanup — busy + reqMode only, both cleared on windowRemoved; no geometry cache (spec 05 FR-008)
+workspace.windowRemoved.connect(function (win) { var wid = String(win.internalId); delete busy[wid]; delete reqMode[wid]; });
 function applyAll() { workspace.windowList().forEach(function (win) { compensateDockEdge(win); applyGap(win); }); }
 workspace.screensChanged.connect(applyAll); workspace.virtualScreenSizeChanged.connect(applyAll); workspace.virtualScreenGeometryChanged.connect(applyAll);

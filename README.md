@@ -90,7 +90,9 @@ When you maximize a window, maxpadd resizes it in place to the screen area minus
 
 With dock compensation enabled, maxpadd also monitors all windows and nudges any that get too close to the floating panel's invisible detection zone — keeping your panel pretty.
 
-It's a tiny plain JavaScript file (~120 lines). No dependencies, no build step, no bloat.
+Whenever a panel changes geometry (the default "fit content" panel grows or shrinks every time a window opens or closes), KWin re-snaps every maximized window back to the full maximize area. maxpadd intercepts that moment (`frameGeometryAboutToChange`) and re-asserts the gap before KWin's resize request reaches the app, so the app never draws a full-size frame — no flash, no matter how your panels are configured (since 2.1.0).
+
+It's a tiny plain JavaScript file (~130 lines). No dependencies, no build step, no bloat.
 
 ## Troubleshooting
 
