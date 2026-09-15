@@ -17,5 +17,21 @@
         <entry name="dockMargin" type="Int">
             <default>12</default>
         </entry>
+        <entry name="desktopSwitchEnabled" type="Bool">
+            <default>false</default>
+        </entry>
+        <!-- combo index: 0 = Off, N = screen N (screens sorted left-to-right, then top-to-bottom) -->
+        <entry name="desktopSlot1" type="Int">
+            <default>1</default>
+        </entry>
+        <entry name="desktopSlot2" type="Int">
+            <default>2</default>
+        </entry>
+        <entry name="desktopSlot3" type="Int">
+            <default>3</default>
+        </entry>
+        <entry name="desktopSlot4" type="Int">
+            <default>4</default>
+        </entry>
     </group>
 </kcfg>

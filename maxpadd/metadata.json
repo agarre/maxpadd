@@ -2,7 +2,7 @@
     "KPackageStructure": "KWin/Script",
     "KPlugin": {
         "Name": "maxpadd",
-        "Description": "Adds configurable padding around maximized windows",
+        "Description": "Adds configurable padding around maximized windows; optional per-screen virtual desktop shortcuts",
         "Icon": "preferences-system-windows",
         "Authors": [
             {
@@ -13,7 +13,7 @@
         "Id": "maxpadd",
         "Category": "Window Management",
         "License": "GPL-3.0",
-        "Version": "2.1.0",
+        "Version": "2.2.0",
         "Website": "https://github.com/agarre/maxpadd"
     },
     "X-Plasma-API": "javascript",

@@ -175,6 +175,135 @@ Add extra apps below (comma-separated). Use the app's window class name (e.g. "d
                         </layout>
                     </widget>
 
+                    <!-- Tab 3: Desktops (per-screen virtual desktop switch, off by default) -->
+                    <widget class="QWidget" name="tabDesktops">
+                        <attribute name="title">
+                            <string>Desktops</string>
+                        </attribute>
+                        <layout class="QVBoxLayout" name="desktopsLayout">
+                            <item>
+                                <widget class="QCheckBox" name="kcfg_desktopSwitchEnabled">
+                                    <property name="text">
+                                        <string>Switch virtual desktops per screen (Meta+1..4)</string>
+                                    </property>
+                                    <property name="toolTip">
+                                        <string>Each shortcut cycles the virtual desktop of ONE screen, wherever the mouse is — like Hyprland workspaces per monitor.</string>
+                                    </property>
+                                </widget>
+                            </item>
+                            <item>
+                                <widget class="QLabel" name="labelDesktopsInfo">
+                                    <property name="text">
+                                        <string>Requires KWin 6.7+ with per-screen desktops enabled once:
+kwriteconfig6 --file kwinrc --group Windows --key PerOutputVirtualDesktops true
+
+Screens are numbered left to right, then top to bottom (screen 1 = leftmost). Reload the script after changing this tab.</string>
+                                    </property>
+                                    <property name="wordWrap">
+                                        <bool>true</bool>
+                                    </property>
+                                </widget>
+                            </item>
+                            <item>
+                                <layout class="QFormLayout" name="desktopsForm">
+                                    <item row="0" column="0">
+                                        <widget class="QLabel" name="labelSlot1">
+                                            <property name="text">
+                                                <string>Meta+1:</string>
+                                            </property>
+                                        </widget>
+                                    </item>
+                                    <item row="0" column="1">
+                                        <widget class="QComboBox" name="kcfg_desktopSlot1">
+                                            <property name="currentIndex">
+                                                <number>1</number>
+                                            </property>
+                                            <item><property name="text"><string>Off</string></property></item>
+                                            <item><property name="text"><string>Screen 1</string></property></item>
+                                            <item><property name="text"><string>Screen 2</string></property></item>
+                                            <item><property name="text"><string>Screen 3</string></property></item>
+                                            <item><property name="text"><string>Screen 4</string></property></item>
+                                        </widget>
+                                    </item>
+                                    <item row="1" column="0">
+                                        <widget class="QLabel" name="labelSlot2">
+                                            <property name="text">
+                                                <string>Meta+2:</string>
+                                            </property>
+                                        </widget>
+                                    </item>
+                                    <item row="1" column="1">
+                                        <widget class="QComboBox" name="kcfg_desktopSlot2">
+                                            <property name="currentIndex">
+                                                <number>2</number>
+                                            </property>
+                                            <item><property name="text"><string>Off</string></property></item>
+                                            <item><property name="text"><string>Screen 1</string></property></item>
+                                            <item><property name="text"><string>Screen 2</string></property></item>
+                                            <item><property name="text"><string>Screen 3</string></property></item>
+                                            <item><property name="text"><string>Screen 4</string></property></item>
+                                        </widget>
+                                    </item>
+                                    <item row="2" column="0">
+                                        <widget class="QLabel" name="labelSlot3">
+                                            <property name="text">
+                                                <string>Meta+3:</string>
+                                            </property>
+                                        </widget>
+                                    </item>
+                                    <item row="2" column="1">
+                                        <widget class="QComboBox" name="kcfg_desktopSlot3">
+                                            <property name="currentIndex">
+                                                <number>3</number>
+                                            </property>
+                                            <item><property name="text"><string>Off</string></property></item>
+                                            <item><property name="text"><string>Screen 1</string></property></item>
+                                            <item><property name="text"><string>Screen 2</string></property></item>
+                                            <item><property name="text"><string>Screen 3</string></property></item>
+                                            <item><property name="text"><string>Screen 4</string></property></item>
+                                        </widget>
+                                    </item>
+                                    <item row="3" column="0">
+                                        <widget class="QLabel" name="labelSlot4">
+                                            <property name="text">
+                                                <string>Meta+4:</string>
+                                            </property>
+                                        </widget>
+                                    </item>
+                                    <item row="3" column="1">
+                                        <widget class="QComboBox" name="kcfg_desktopSlot4">
+                                            <property name="currentIndex">
+                                                <number>4</number>
+                                            </property>
+                                            <item><property name="text"><string>Off</string></property></item>
+                                            <item><property name="text"><string>Screen 1</string></property></item>
+                                            <item><property name="text"><string>Screen 2</string></property></item>
+                                            <item><property name="text"><string>Screen 3</string></property></item>
+                                            <item><property name="text"><string>Screen 4</string></property></item>
+                                        </widget>
+                                    </item>
+                                </layout>
+                            </item>
+                            <item>
+                                <widget class="QLabel" name="labelDesktopsWarning">
+                                    <property name="text">
+                                        <string>Warning: Plasma binds Meta+1..9 to "Activate Task Manager Entry N" by default, and KWin registers a taken shortcut as unset. Free the keys with ./desktop-shortcuts.sh from the maxpadd repository (it asks before changing anything, --undo reverts), or manually in System Settings &gt; Keyboard &gt; Shortcuts: remove Meta+N under Plasma, then assign it under KWin &gt; "maxpadd: next virtual desktop on screen N".</string>
+                                    </property>
+                                    <property name="wordWrap">
+                                        <bool>true</bool>
+                                    </property>
+                                </widget>
+                            </item>
+                            <item>
+                                <spacer name="desktopsSpacer">
+                                    <property name="orientation">
+                                        <enum>Qt::Vertical</enum>
+                                    </property>
+                                </spacer>
+                            </item>
+                        </layout>
+                    </widget>
+
                 </widget>
             </item>
         </layout>

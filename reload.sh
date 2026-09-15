@@ -10,13 +10,10 @@
 SCRIPT="${1:-maxpadd}"
 
 reconfigure() {
-    if command -v qdbus6 >/dev/null 2>&1; then
-        qdbus6 org.kde.KWin /KWin reconfigure
-    elif command -v qdbus-qt6 >/dev/null 2>&1; then
-        qdbus-qt6 org.kde.KWin /KWin reconfigure
-    elif command -v qdbus >/dev/null 2>&1; then
-        qdbus org.kde.KWin /KWin reconfigure
-    elif command -v gdbus >/dev/null 2>&1; then
+    for q in qdbus6 qdbus-qt6 qdbus; do
+        command -v "$q" >/dev/null 2>&1 && { "$q" org.kde.KWin /KWin reconfigure; return; }
+    done
+    if command -v gdbus >/dev/null 2>&1; then
         gdbus call --session --dest org.kde.KWin --object-path /KWin --method org.kde.KWin.reconfigure >/dev/null
     elif command -v busctl >/dev/null 2>&1; then
         busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure

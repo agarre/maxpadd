@@ -22,10 +22,9 @@ function isIgnored(win) {
     var name = String(win.resourceName).toLowerCase();
     return ignoredApps.indexOf(cls) >= 0 || ignoredApps.indexOf(name) >= 0;
 }
-function getGapSize() { return gapSize; }
 // AIDEV-NOTE returns per-side gaps; adds dockMargin on panel sides when compensateDockMode >= 1
 function getGaps(win) {
-    var g = getGapSize();
+    var g = gapSize;
     if (compensateDockMode < 1) return {t: g, b: g, l: g, r: g};
     var dm = g > 0 ? dockMargin : 0;
     var s = workspace.clientArea(KWin.ScreenArea, win);
@@ -98,7 +97,7 @@ function compensateDockEdge(win) {
     var s = workspace.clientArea(KWin.ScreenArea, win);
     // AIDEV-NOTE fullscreen race: fullScreen flag lags behind frameGeometryChanged; detect by size
     if (near(g.width, s.width) && near(g.height, s.height)) return;
-    var threshold = dockMargin + getGapSize();
+    var threshold = dockMargin + gapSize;
     var nX = g.x, nY = g.y, nW = g.width, nH = g.height, adj = false;
     // AIDEV-NOTE maxpadd/nudge-tolerance — !near(dist, threshold) stops sub-pixel re-nudges at boundary (spec 03 FR-003)
     if (area.y > s.y && (g.y - area.y) < threshold && !near(g.y - area.y, threshold))
@@ -131,3 +130,21 @@ workspace.windowList().forEach(connectWindow); workspace.windowAdded.connect(con
 workspace.windowRemoved.connect(function (win) { var wid = String(win.internalId); delete busy[wid]; delete reqMode[wid]; });
 function applyAll() { workspace.windowList().forEach(function (win) { compensateDockEdge(win); applyGap(win); }); }
 workspace.screensChanged.connect(applyAll); workspace.virtualScreenSizeChanged.connect(applyAll); workspace.virtualScreenGeometryChanged.connect(applyAll);
+// AIDEV-NOTE maxpadd/desktop-switch — Hyprland "workspace N, monitor:X" on KWin: cycle ONE output's desktop,
+// mouse-independent (spec 06). Needs kwinrc [Windows] PerOutputVirtualDesktops=true (KWin >= 6.7); when off KWin
+// switches every output. Screen N = Nth output left-to-right, then top-to-bottom: workspace.screens raw order is
+// NOT the Display Configuration order. API order is (desktop, output); reversed fails "Could not convert argument 0".
+function cycleDesktopOnScreen(n) {
+    var out = workspace.screens.slice().sort(function (a, b) { return (a.geometry.x - b.geometry.x) || (a.geometry.y - b.geometry.y); })[n - 1];
+    if (!out) return;
+    var desks = workspace.desktops, cur = workspace.currentDesktopForScreen(out), i = 0;
+    for (var k = 0; k < desks.length; k++) if (desks[k].id === cur.id) i = k;   // compare by id, not object identity
+    workspace.setCurrentDesktopForScreen(desks[(i + 1) % desks.length], out);
+}
+if (readConfig("desktopSwitchEnabled", false) && typeof workspace.setCurrentDesktopForScreen === "function") {
+    for (var slot = 1; slot <= 4; slot++) (function (n) {
+        var s = readConfig("desktopSlot" + n, n);
+        if (s > 0) registerShortcut("maxpadd-desktop-slot-" + n, "maxpadd: next virtual desktop on screen " + s,
+            "Meta+" + n, function () { cycleDesktopOnScreen(s); });
+    })(slot);
+}

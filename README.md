@@ -18,6 +18,7 @@ Instead of windows taking up the entire screen when maximized, maxpadd shrinks t
 - Skips dialogs and system windows — only touches regular windows
 - Ignore list: plasma internals are always excluded, and you can add your own apps
 - Native restore: the window stays genuinely maximized, so the app's own restore button works as usual
+- **Per-screen virtual desktops (optional, off by default)** — Meta+1 cycles the desktop of screen 1, Meta+2 of screen 2, wherever the mouse is. Hyprland's workspace-per-monitor model on KWin.
 
 ## Requirements
 
@@ -74,6 +75,25 @@ After enabling, go to **System Settings > Window Management > KWin Scripts**, fi
 Some apps are always ignored (plasmashell, krunner, spectacle, etc.). You can add extra apps as a comma-separated list of window class names (e.g. `discord, steam, gimp`).
 
 To find an app's window class, run `xprop WM_CLASS` and click the window, or check `qdbus6 org.kde.KWin /KWin queryWindowInfo`.
+
+### Desktops tab (optional)
+
+Off by default. When enabled, each shortcut cycles the virtual desktop of **one** screen, no matter where the mouse is — the native "Switch to Desktop N" only acts on the screen under the pointer.
+
+1. Enable per-screen desktops in KWin once (KWin 6.7+):
+   ```bash
+   kwriteconfig6 --file kwinrc --group Windows --key PerOutputVirtualDesktops true
+   ```
+2. Tick **Switch virtual desktops per screen**, map `Meta+1..4` to a screen (or Off), then `./reload.sh`.
+   Screens are numbered left to right, then top to bottom: screen 1 is the leftmost.
+3. Free the keys. Plasma binds Meta+1..9 to "Activate Task Manager Entry N", and KWin leaves a taken shortcut unset. Either run the helper, which shows what it will change and asks first:
+   ```bash
+   ./desktop-shortcuts.sh          # Meta+1..4 → maxpadd
+   ./desktop-shortcuts.sh --undo   # give them back to the task manager
+   ```
+   or do it in **System Settings > Keyboard > Shortcuts**: remove Meta+N under *Plasma*, then assign it under *KWin* > "maxpadd: next virtual desktop on screen N".
+
+With `PerOutputVirtualDesktops` off, KWin switches every screen at once, so the shortcuts degrade to a plain desktop cycle.
 
 ## Reloading after config changes
 
